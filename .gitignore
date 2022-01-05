@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+# compiled files
+*.output
+*.tab.h
+*.tab.c
+tac2mips
+
+# flex
+*.yy.c
+
+# editor
+.vscode/
