@@ -681,31 +681,31 @@ void Translator::translateInstruction(T_Instruction instruction)
     {
         // BIG DOUBT ABOUT THIS ONE
 
-        vector<string> op_registers = getReg(instruction);
+        // vector<string> op_registers = getReg(instruction);
 
-        // The size of the memory needed to be allocated should be in $a0
-        // First, save whatever value is in the register
-        vector<string> regDescriptor = getRegisterDescriptor("$a0", m_registers);
-        for(string currentVar : regDescriptor)
-        {
-            if(is_number(currentVar))
-                continue;
+        // // The size of the memory needed to be allocated should be in $a0
+        // // First, save whatever value is in the register
+        // vector<string> regDescriptor = getRegisterDescriptor("$a0", m_registers);
+        // for(string currentVar : regDescriptor)
+        // {
+        //     if(is_number(currentVar))
+        //         continue;
             
-            if(!is_static(currentVar))
-                storeTemporal(currentVar, "$a0");
-            else
-                availability(currentVar, currentVar);
-        }
+        //     if(!is_static(currentVar))
+        //         storeTemporal(currentVar, "$a0");
+        //     else
+        //         availability(currentVar, currentVar);
+        // }
 
-        m_registers["$a0"].clear();
-        removeElementFromDescriptors(m_variables, "$a0", "");
+        // m_registers["$a0"].clear();
+        // removeElementFromDescriptors(m_variables, "$a0", "");
 
-        // Move the value to shrink to $a0
-        m_text.emplace_back(mips_instructions.at("assign") + space + "$a0" + sep + op_registers[0]);
-        m_text.emplace_back(mips_instructions.at("minus") + space + "$a0" + sep + "$a0");
+        // // Move the value to shrink to $a0
+        // m_text.emplace_back(mips_instructions.at("assign") + space + "$a0" + sep + op_registers[0]);
+        // m_text.emplace_back(mips_instructions.at("minus") + space + "$a0" + sep + "$a0");
 
-        // Call the syscall
-        m_text.emplace_back(mips_instructions.at(instruction.id));
+        // // Call the syscall
+        // m_text.emplace_back(mips_instructions.at(instruction.id));
         return;
     }
 
