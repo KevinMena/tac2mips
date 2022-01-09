@@ -221,7 +221,8 @@ void FlowGraph::deleteDeadVariables(void) {
             // si se hace una asignacion a memoria o si la variable esta viva.
             if (
                 instrToValidate.count(instr.id) == 0 || 
-                instr.result.is_acc || out.count(instr.result.name) > 0
+                instr.result.is_acc || out.count(instr.result.name) > 0 ||
+                instr.result.name == "BASE" || instr.result.name == "STACK" 
             ) {
                 newBlock.push_back(instr); 
                 out = (*functions[instr.id]) (out, instr);
