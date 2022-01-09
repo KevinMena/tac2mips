@@ -114,9 +114,11 @@ class FlowNode {
         bool is_function;
         // En caso de ser asi, obtenemos el ID y la memoria necesaria de la funcion.
         uint64_t function_id;
+        uint64_t f_id;
         uint64_t function_size;
         // Nodo a partir del cual ya no forman parte de la funcion.
         uint64_t function_end;
+        set<uint64_t> function_blocks;
         vector<T_Instruction> block = {};
 
         FlowNode(uint64_t id, uint64_t leader, T_Function *function, bool is_function);
@@ -144,6 +146,7 @@ class FlowGraph {
         map<uint64_t, set<uint64_t>> Einv;
         // Funciones
         map<string, uint64_t> F;
+        set<uint64_t> F_ids;
         // Relaciones llamador/llamado
         map<uint64_t, uint64_t> caller;
         map<uint64_t, set<uint64_t>> called;
@@ -151,6 +154,12 @@ class FlowGraph {
         set<string> staticVars;
         // Cota superior de los ID de los bloques.
         uint64_t lastID;
+        // Temporales usados por una funcion
+        set<string> globals;
+        map<uint64_t, set<string>> use_T;
+        map<string, uint64_t> temps_size;
+        map<string, uint64_t> temps_offset;
+        map<string, string> float_literals;
 
         // Conjuntos del analisis de flujo.
         map<uint64_t, vector<map<string, set<pair<uint64_t, uint64_t>>>>> reaching;
@@ -170,6 +179,9 @@ class FlowGraph {
 
         void insertArc(uint64_t u, uint64_t v);
         void deleteBlock(uint64_t id);
+        set<string> computeUseT(uint64_t id);
+        void computeAllUseT(void);
+        void processingLitFloats(void);
         uint64_t makeSubGraph(T_Function *function, uint64_t init_id);
         void print(void);
         vector<FlowNode*> getOrderedBlocks(void); 

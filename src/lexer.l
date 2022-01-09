@@ -31,6 +31,9 @@
 %}
 
 %%
+\"(?:[^"\\\n]|\\.)*\"         { return STRING; }
+#.*\n                         { return NL; }
+#.*                           { /* ignore single line comment */ }
 "@staticv"                    { return MI_STATICV; }
 "@string"                     { return MI_STRING; }
 "@label"                      { return MI_LABEL; }
@@ -83,7 +86,6 @@
 [\t]                          { /* ignore tab */ }
 [ ]                           { /* ignore whitespace */ }
 \'.\'                         { yylval.chr = yytext[1]; return CHAR; }
-\"(?:[^"\\\n]|\\.)*\"         { return STRING; }
 \n                            { return NL; } 
 .                             { 
                                 /* add error to queue */

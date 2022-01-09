@@ -132,6 +132,7 @@ void FlowGraph::deleteBlock(uint64_t id) {
     // Si el nodo es una funcion, eliminamos su referencia en el grafo y sus llamados
     if (this->V[id]->is_function) {
         this->F.erase(this->V[id]->getName());
+        this->F_ids.erase(id);
         this->called.erase(id);
     }
 
@@ -152,6 +153,7 @@ uint64_t FlowGraph::makeSubGraph(T_Function *function, uint64_t init_id) {
         last_id, 
         new FlowNode(last_id, function->vec_leaders[0], function, true && function->id)
     });
+    this->V[last_id]->f_id = init_id;
     last_id++;
 
     for (uint64_t i = 1; i < function->vec_leaders.size(); i++) {
@@ -161,6 +163,7 @@ uint64_t FlowGraph::makeSubGraph(T_Function *function, uint64_t init_id) {
             last_id, 
             new FlowNode(last_id, function->vec_leaders[i], function, false)
         });
+        this->V[last_id]->f_id = init_id;
         last_id++;
     }
     this->V[init_id]->function_end = last_id;
@@ -243,11 +246,13 @@ FlowGraph::FlowGraph(vector<T_Function*> functions, set<string> staticVars) {
 
     // Creamos el grafo global
     current_id = this->makeSubGraph(functions[0], 0);
+    this->F_ids.insert(0);
     // Agregamos la instruccion para finalizar el programa al ultimo bloque.
     this->V[current_id-1]->block.push_back({"exit", {"0", "", false}, {}});
 
     // Creamos el grafo de cada funcion
     for (uint64_t i = 1; i < functions.size(); i++) {
+        this->F_ids.insert(current_id);
         this->F[functions[i]->name] = current_id;
         current_id = this->makeSubGraph(functions[i], current_id);
     }
@@ -330,6 +335,12 @@ void FlowGraph::print(void) {
 
 vector<FlowNode*> FlowGraph::getOrderedBlocks(void) {
     vector<FlowNode*> orderedBlocks;
+    for (pair<uint64_t, FlowNode*> n : this->V) {
+        orderedBlocks.push_back(n.second);
+    }
+    return orderedBlocks;
+
+
     // Cola de nodos a visitar
     queue<uint64_t> toVisit;
     // Nodos que ya se visitaron
@@ -354,6 +365,7 @@ vector<FlowNode*> FlowGraph::getOrderedBlocks(void) {
                     toVisit.pop();
                 }
 
+                urgent = false;
                 if (visited[v->id]) continue;
                 orderedBlocks.push_back(v);
                 visited[v->id] = true;
@@ -410,5 +422,165 @@ void FlowGraph::prettyPrint(void) {
     for (FlowNode *n : this->getOrderedBlocks()) {
         if (n->is_function) cout << "\n\n";
         n->prettyPrint();
+    }
+}
+
+bool tempIsID(string var) {
+    return var[0] == '_' || ('A' <= var[0] && var[0] <= 'z');
+}
+
+set<string> byteInstr = {
+    "assignb", "eq", "neq", "lt", "leq", "gt", "geq", "or", "and", "readc"
+};
+
+set<string> FlowGraph::computeUseT(uint64_t id) {
+    set<string> temps;
+    for (T_Instruction instr : this->V[id]->block) {
+        if (instr.id != "goto" && instr.id != "goif" && instr.id != "goifnot") {
+            if (tempIsID(instr.result.name)) {
+                temps.insert(instr.result.name);
+            }
+            if (instr.result.is_acc && tempIsID(instr.result.acc)) {
+                temps.insert(instr.result.acc);
+            }
+        }
+
+        if (instr.operands.size() > 0 && instr.id != "call") {
+            if (tempIsID(instr.operands[0].name)) {
+                temps.insert(instr.operands[0].name);
+            }
+            if (instr.operands[0].is_acc && tempIsID(instr.operands[0].acc)) {
+                temps.insert(instr.operands[0].acc);
+            }
+        }
+        if (instr.operands.size() > 1 && tempIsID(instr.operands[1].name)) {
+            temps.insert(instr.operands[1].name);
+        }
+
+        if (
+            byteInstr.count(instr.id) == 0 && instr.id != "goto" && 
+            instr.id != "goif" && instr.id != "goifnot"
+            ) {
+            this->temps_size[instr.result.name] = 4;
+        }
+        else {
+            this->temps_size[instr.result.name] = 1;
+        }
+    }
+    return temps;
+}
+
+void FlowGraph::computeAllUseT(void) {
+    set<string> temps_f;
+    set<uint64_t> visited;
+    vector<uint64_t> stack;
+    uint64_t m;
+    uint64_t totalSize;
+
+    for (uint64_t f_id : this->F_ids) {
+        // Aplicamos DFS para saber cuales bloques son alcanzables.
+        visited = {f_id};
+        stack = {f_id};
+        // Aplicamos DFS
+        while (stack.size() > 0) {
+            m = stack.back();
+            stack.pop_back();
+
+            for (uint64_t n : this->E[m]) {
+                if (visited.count(n) == 0) {
+                    stack.push_back(n);
+                    visited.insert(n);
+                }
+            }
+        }
+
+        // Calculamos los temporales usados por la funcion
+        temps_f = {};
+        for (uint64_t B : visited) {
+            temps_f = setUnion<string>(temps_f, this->computeUseT(B));
+        }
+
+        if (f_id == 0) {
+            this->globals = temps_f;
+            this->globals = setUnion<string>(this->globals, this->staticVars);
+            this->globals.insert("BASE");
+            this->globals.insert("STACK");
+
+            for (string t : this->use_T[f_id]) {
+                this->temps_offset[t] = -1;
+            }
+            this->temps_offset["BASE"] = -1;
+            this->temps_offset["STACK"] = -1;
+        }
+        else {
+            this->use_T[f_id] = setSub<string>(temps_f, this->globals);
+            this->use_T[f_id] = setSub<string>(temps_f, this->staticVars);
+            this->use_T[f_id].erase("BASE");
+            this->use_T[f_id].erase("STACK");
+
+            totalSize = 0;
+            uint64_t diff;
+            for (string t : this->use_T[f_id]) {
+                if (
+                    this->temps_size[t] != 1 && 
+                    (this->V[f_id]->function_size + totalSize) % 4 != 0) 
+                    {
+                    diff = 4 - (this->V[f_id]->function_size + totalSize) % 4 ;
+                }
+                else {
+                    diff = 0;
+                }
+                this->temps_offset[t] = this->V[f_id]->function_size + totalSize + diff;
+                totalSize += this->temps_size[t] + diff;
+            }
+
+            if (totalSize % 4 != 0) {
+                totalSize += 4 - (totalSize % 4);
+            }
+
+            for (uint64_t B : visited) {
+                this->V[B]->function_size += totalSize;
+            }
+        }
+    }
+}
+
+void FlowGraph::processingLitFloats(void) {
+    uint64_t float_count = 0;
+    T_Instruction instr;
+    string temp;
+
+    for (pair<uint64_t, FlowNode*> n : this->V) {
+        for (uint64_t i = 0; i < n.second->block.size(); i++) {
+            instr = n.second->block[i];
+
+            if (instr.operands.size() > 0 && instr.operands[0].name.find(".") != string::npos) {
+                while (this->globals.count("f" + to_string(float_count)) > 0) {
+                    float_count++;
+                }
+
+                temp = "f" + to_string(float_count);
+                this->globals.insert(temp);
+                this->temps_offset[temp] = -1;
+                this->temps_size[temp] = 4;
+
+                this->float_literals[temp] = n.second->block[i].operands[0].name;
+                n.second->block[i].operands[0].name = temp;
+            }
+
+            if (instr.operands.size() > 1 && instr.operands[1].name.find(".") != string::npos) {
+                while (this->globals.count("f" + to_string(float_count)) > 0) {
+                    float_count++;
+                }
+
+                temp = "f" + to_string(float_count);
+                this->globals.insert(temp);
+                this->temps_offset[temp] = -1;
+                this->temps_size[temp] = 4;
+
+                this->float_literals[temp] = n.second->block[i].operands[1].name;
+                n.second->block[i].operands[1].name = temp;
+            }
+        }
     }
 }

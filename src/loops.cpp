@@ -184,6 +184,7 @@ void addPreHeader(FlowGraph *fg, uint64_t header, set<uint64_t> loop) {
 
     // Creamos un nuevo bloque.
     fg->V.insert({preHeader, new FlowNode(preHeader, fg->V[header]->is_function)});
+    fg->V[preHeader]->f_id = fg->V[header]->f_id;
 
     // Si el header original era una funcion, transferimos todos los atributos 
     // correspondientes

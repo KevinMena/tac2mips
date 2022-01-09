@@ -195,7 +195,10 @@ T_Instruction arit(
     string op;
 
     // Verificamos si uno de los operadores es flotante
-    if (instr.operands[0].name[0] == 'f' || instr.operands[1].name[0] == 'f') {
+    if (
+        instr.operands[0].name.find(".") != string::npos || 
+        instr.operands[1].name.find(".") != string::npos 
+        ) {
         op = to_string((*floatOp) (stof(instr.operands[0].name), stof(instr.operands[1].name)));
     }
     else {
@@ -207,14 +210,14 @@ T_Instruction arit(
 
 T_Instruction numberComp(T_Instruction instr, bool (*compOp) (float, float)) {
     bool result = (*compOp) (stof(instr.operands[0].name), stof(instr.operands[1].name));
-    string op = result ? "True" : "False";
+    string op = result ? "1" : "0";
     return {"assignb", instr.result, {{op, "", false}}};
 }
 
 T_Instruction boolean(T_Instruction instr, bool (*boolOp) (bool, bool)) {
-    bool left = (instr.operands[0].name == "1") || (instr.operands[0].name == "True");
-    bool right = (instr.operands[1].name == "1") || (instr.operands[1].name == "True");
-    string op  = (*boolOp) (left, right) ? "True" : "False";
+    bool left = (instr.operands[0].name == "1") || (instr.operands[0].name == "1");
+    bool right = (instr.operands[1].name == "1") || (instr.operands[1].name == "1");
+    string op  = (*boolOp) (left, right) ? "1" : "0";
     return {"assignb", instr.result, {{op, "", false}}};
 }
 
@@ -222,7 +225,7 @@ T_Instruction minusInstr(T_Instruction instr) {
     string op;
 
     // Verificamos si uno de los operadores es flotante
-    if (instr.operands[0].name[0] == 'f') {
+    if (instr.operands[0].name.find(".") != string::npos) {
         op = to_string(-(stof(instr.operands[0].name)));
     }
     else {
@@ -237,18 +240,18 @@ T_Instruction eq(T_Instruction instr) {
 
     // Verificamos si son numeros
     if ('0' <= instr.operands[0].name[0] && instr.operands[0].name[0] <= '9') {
-        op = stof(instr.operands[0].name) == stof(instr.operands[1].name) ? "True" : "False";
+        op = stof(instr.operands[0].name) == stof(instr.operands[1].name) ? "1" : "0";
     }
     // O caracteres
     else if (instr.operands[0].name[0] == '\'') {
-        op = instr.operands[0].name == instr.operands[1].name ? "True" : "False";
+        op = instr.operands[0].name == instr.operands[1].name ? "1" : "0";
     }
     // Y por ultimo booleanos
     else {
         bool left, right;
-        left = instr.operands[0].name == "True" || instr.operands[0].name == "1";
-        right = instr.operands[1].name == "True" || instr.operands[1].name == "1";
-        op = left == right ? "True" : "False";
+        left = instr.operands[0].name == "1" || instr.operands[0].name == "1";
+        right = instr.operands[1].name == "1" || instr.operands[1].name == "1";
+        op = left == right ? "1" : "0";
     }
 
     return {"assignb", instr.result, {{op, "", false}}};
@@ -259,18 +262,18 @@ T_Instruction neq(T_Instruction instr) {
 
     // Verificamos si son numeros
     if ('0' <= instr.operands[0].name[0] && instr.operands[0].name[0] <= '9') {
-        op = stof(instr.operands[0].name) != stof(instr.operands[1].name) ? "True" : "False";
+        op = stof(instr.operands[0].name) != stof(instr.operands[1].name) ? "1" : "0";
     }
     // O caracteres
     else if (instr.operands[0].name[0] == '\'') {
-        op = instr.operands[0].name != instr.operands[1].name ? "True" : "False";
+        op = instr.operands[0].name != instr.operands[1].name ? "1" : "0";
     }
     // Y por ultimo booleanos
     else {
         bool left, right;
-        left = instr.operands[0].name == "True" || instr.operands[0].name == "1";
-        right = instr.operands[1].name == "True" || instr.operands[1].name == "1";
-        op = left != right ? "True" : "False";
+        left = instr.operands[0].name == "1" || instr.operands[0].name == "1";
+        right = instr.operands[1].name == "1" || instr.operands[1].name == "1";
+        op = left != right ? "1" : "0";
     }
 
     return {"assignb", instr.result, {{op, "", false}}};

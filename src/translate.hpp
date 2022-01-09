@@ -113,47 +113,52 @@ private:
     unordered_map<string, uint32_t> m_tags;
 
     // Mips data
-    vector<string> data;
-    vector<string> text;
+    vector<string> m_data;
+    vector<string> m_text;
+    set<string> data_statics;
     bool function_section = false;
 
     uint64_t current_size;
     uint64_t last_label_id;
     
     // Descriptors management
-    bool insertElementToDescriptor(unordered_map<string, vector<string>> &descriptors, string key, string element, bool replace = false);
-    void removeElementFromDescriptors(unordered_map<string, vector<string>> &descriptors, string element, string current_container);
-    string findElementInDescriptors(unordered_map<string, vector<string>> &descriptors, string element);
+    bool insertElementToDescriptor(unordered_map<string, vector<string>> &descriptors, const string& key, const string& element, bool replace = false);
+    void removeElementFromDescriptors(unordered_map<string, vector<string>> &descriptors, const string& element, const string& current_container);
+    string findElementInDescriptors(unordered_map<string, vector<string>> &descriptors, const string& element);
     string findOptimalLocation(string id);
     
     // Registers management
-    vector<string> getReg(T_Instruction instruction, vector<string>& section, bool is_copy = false);
+    vector<string> getReg(T_Instruction instruction, bool is_copy = false);
     vector<string> findFreeRegister(unordered_map<string, vector<string>>& curr_registers);
-    string recycleRegister(T_Instruction instruction, unordered_map<string, vector<string>>& descriptors, vector<string>& section, vector<string> &regs);
-    void selectRegister(string operand, T_Instruction instruction, unordered_map<string, vector<string>>& descriptors, vector<string> &regs, vector<string> &free_regs, vector<string>& section);
+    string recycleRegister(T_Instruction instruction, unordered_map<string, vector<string>>& descriptors, vector<string> &regs);
+    void selectRegister(const string& operand, T_Instruction instruction, unordered_map<string, vector<string>>& descriptors, vector<string> &regs, vector<string> &free_regs);
     void cleanRegistersDescriptor();
     
     // Updating descriptors
-    bool assignment(string register_id, string variable_id, unordered_map<string, vector<string>>& curr_registers, bool replace = false);
-    bool availability(string variable_id, string location, bool replace = false);
+    bool assignment(const string& register_id, const string& variable_id, unordered_map<string, vector<string>>& curr_registers, bool replace = false);
+    bool availability(const string& variable_id, const string& location, bool replace = false);
 
     // Instructions tranlations
-    void translateInstruction(T_Instruction instruction, vector<string>& section);
+    void translateInstruction(T_Instruction instruction);
     void translateMetaIntruction(T_Instruction instruction);
-    void translateOperationInstruction(T_Instruction instruction, vector<string>& section, bool is_copy = false, uint32_t type = 0);
-    void translateIOIntruction(T_Instruction instruction, vector<string>& section);
+    void translateOperationInstruction(T_Instruction instruction, bool is_copy = false);
+    void translateIOIntruction(T_Instruction instruction);
 
     // Setters
-    bool insertRegister(string id);
-    bool insertFloatRegister(string id);
-    bool insertVariable(string id, uint32_t type, string value = "1");
+    bool insertRegister(const string& id, unordered_map<string, vector<string>>& descriptors);
+    bool insertVariable(const string& id);
 
     // Getters
-    vector<string> getRegisterDescriptor(string id, unordered_map<string, vector<string>>& curr_registers);
-    vector<string> getVariableDescriptor(string id);
+    vector<string> getRegisterDescriptor(const string& id, unordered_map<string, vector<string>>& curr_registers);
+    vector<string> getVariableDescriptor(const string& id);
 
     // Utilities
+    void loadTemporal(const string& id, const string& register_id, bool maintain_descriptor = true);
+    void storeTemporal(const string& id, const string& register_id, bool replace = false);
     bool is_number(const string& str);
+    bool is_static(const string& id);
+    bool is_global(const string& id);
+
 
 public:
     Translator();
