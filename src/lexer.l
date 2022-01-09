@@ -92,6 +92,7 @@
 \'\\r\'                       { yylval.integer = '\r';      return CHAR; }
 \'\\t\'                       { yylval.integer = '\t';      return CHAR; }
 \'\\v\'                       { yylval.integer = '\v';      return CHAR; }
+\'\\0\'                       { yylval.integer = '\0';      return CHAR; }
 [0-9]+\.[0-9]+                { yylval.flot = atof(yytext); return FLOAT; }
 [\t]                          { /* ignore tab */ }
 [ ]                           { /* ignore whitespace */ }
