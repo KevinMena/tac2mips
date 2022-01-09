@@ -81,10 +81,6 @@ void FlowNode::print(void) {
         }
         cout << "\n";
     }
-
-    if (this->is_function) {
-        cout << "@endfunction " << to_string(this->function_size) << "\n";
-    } 
 }
 
 void FlowNode::prettyPrint(void) {
@@ -332,10 +328,24 @@ FlowGraph::FlowGraph(vector<T_Function*> functions, set<string> staticVars) {
 }
 
 void FlowGraph::print(void) {
+    bool infunction = false;
+    uint64_t lastsize;
+
     for (pair<uint64_t, FlowNode*> n : this->V) {
-        if (n.second->is_function) cout << "\n\n";
+        if (n.second->is_function) {
+            if (! infunction) {
+                infunction = true;
+            }
+            else {
+                cout << "@endfunction " + to_string(lastsize) + "\n";
+            }
+            cout << "\n\n";
+        }
         n.second->print();
+        lastsize = n.second->function_size;
     }
+
+    if (infunction) { cout << "@endfunction " + to_string(lastsize) + "\n"; }
 }
 
 vector<FlowNode*> FlowGraph::getOrderedBlocks(void) {
