@@ -457,8 +457,9 @@ void Translator::translate()
             continue;
         
         insertVariable(temporal);
-        string temp_type = m_graph->temps_size[temporal] == 1 ? "byte" : "word";
-        m_data.emplace_back(temporal + decl + mips_instructions.at(temp_type) + space + "1");
+        string temp_type = m_graph->temps_size[temporal] == 1 ? "1" : "4";
+        m_data.emplace_back(".align 2");
+        m_data.emplace_back(temporal + decl + mips_instructions.at("space") + space + temp_type);
     }
 
     vector<FlowNode*> nodes = m_graph->getOrderedBlocks();
@@ -1052,7 +1053,8 @@ void Translator::translateMetaIntruction(T_Instruction instruction)
     {
         insertVariable(instruction.result.name);
         data_statics.emplace(instruction.result.name);
-        m_data.emplace_back(instruction.result.name + decl + mips_instructions.at("word") + space + instruction.operands[0].name);
+        m_data.emplace_back(".align 2");
+        m_data.emplace_back(instruction.result.name + decl + mips_instructions.at("space") + space + instruction.operands[0].name);
         return;
     }
 }
