@@ -47,9 +47,8 @@
 %token <str> I_READF I_READ I_FTOI I_ITOF I_OR I_AND
 %token OPEN_BRACKET CLOSE_BRACKET NL
 
-%token <integer>  INT
+%token <integer>  INT CHAR
 %token <flot>     FLOAT 
-%token <chr>      CHAR
 %token <str>      STRING 
 %token <boolean>  TRUE 
 %token <boolean>  FALSE

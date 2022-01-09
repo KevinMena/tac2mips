@@ -80,12 +80,21 @@
 "False"                       { return FALSE; }
 "True"                        { return TRUE; }
 [[:alpha:]_][[:alnum:]_]*     { return ID; }
--[0-9]+                        { yylval.integer = atoi(yytext); return INT; }
+-[0-9]+                       { yylval.integer = atoi(yytext); return INT; }
 [0-9]+                        { yylval.integer = atoi(yytext); return INT; }
+\'.\'                         { yylval.integer = yytext[1]; return CHAR; }
+\'\\\'\'                      { yylval.integer = '\'';      return CHAR; }
+\'\\\\\'                      { yylval.integer = '\\';      return CHAR; }
+\'\\a\'                       { yylval.integer = '\a';      return CHAR; }
+\'\\b\'                       { yylval.integer = '\b';      return CHAR; }
+\'\\f\'                       { yylval.integer = '\f';      return CHAR; }
+\'\\n\'                       { yylval.integer = '\n';      return CHAR; }
+\'\\r\'                       { yylval.integer = '\r';      return CHAR; }
+\'\\t\'                       { yylval.integer = '\t';      return CHAR; }
+\'\\v\'                       { yylval.integer = '\v';      return CHAR; }
 [0-9]+\.[0-9]+                { yylval.flot = atof(yytext); return FLOAT; }
 [\t]                          { /* ignore tab */ }
 [ ]                           { /* ignore whitespace */ }
-\'.\'                         { yylval.chr = yytext[1]; return CHAR; }
 \n                            { return NL; } 
 .                             { 
                                 /* add error to queue */
