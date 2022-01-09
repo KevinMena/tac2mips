@@ -38,6 +38,9 @@ Translator::Translator()
         i++;
     }
 
+    insertVariable("BASE");
+    insertVariable("STACK");
+
     // Oh no...
     m_text.emplace_back("li  $sp, 0x7fc00000");
     m_text.emplace_back("li  $fp, 0x7fc00000");
@@ -169,7 +172,7 @@ bool Translator::insertElementToDescriptor(unordered_map<string, vector<string>>
     if(found == descriptors.end()) 
         return false;
         
-    if(find(descriptors[key].begin(), descriptors[key].end(), element) != descriptors[key].end())
+    if(find(descriptors[key].begin(), descriptors[key].end(), element) != descriptors[key].end() && !replace)
         return false;
     
     if(replace)
@@ -788,7 +791,7 @@ void Translator::translateInstruction(T_Instruction instruction)
                 if(!is_static(var_id))
                     storeTemporal(var_id, var_descriptor[0], true);
                 else
-                    availability(var_id, var_id);
+                    availability(var_id, var_id, true);
                 
                 removeElementFromDescriptors(m_registers, var_id, "");
             }
@@ -1030,8 +1033,8 @@ void Translator::translateOperationInstruction(T_Instruction instruction, bool i
     removeElementFromDescriptors(m_variables, op_registers[0], instruction.result.name);
     removeElementFromDescriptors(*regs_to_find, instruction.result.name, op_registers[0]);
 
-    // cout << "***** " << instruction.id << " " << instruction.result.name << " " << instruction.operands[0].name << " *****" << endl;
-    // printVariablesDescriptors();
+    //cout << "***** " << instruction.id << " " << instruction.result.name << " " << instruction.operands[0].name << " *****" << endl;
+    //printVariablesDescriptors();
 }
 
 void Translator::translateMetaIntruction(T_Instruction instruction)
@@ -1209,7 +1212,7 @@ void Translator::translateIOIntruction(T_Instruction instruction)
 
 void Translator::printVariablesDescriptors()
 {
-    for(auto var_data : m_registers)
+    for(auto var_data : m_variables)
     {
         cout << var_data.first << " => [";
         for(auto element : var_data.second)
