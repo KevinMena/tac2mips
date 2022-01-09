@@ -41,6 +41,8 @@ Translator::Translator()
     // Oh no...
     m_text.emplace_back("li  $sp, 0x7fc00000");
     m_text.emplace_back("li  $fp, 0x7fc00000");
+    m_text.emplace_back(mips_instructions.at("store") + space + "$sp" + sep + "STACK");
+
 }
 
 void Translator::insertInstruction(T_Instruction* instruction)
@@ -792,6 +794,9 @@ void Translator::translateInstruction(T_Instruction instruction)
             }
         }
 
+        // Take the value of the stack
+        m_text.emplace_back(mips_instructions.at("load") + space + "$sp" + sep + "STACK");
+
         // Jump to the function
         m_text.emplace_back(mips_instructions.at(instruction.id) + space + instruction.operands[0].name);
 
@@ -948,9 +953,9 @@ void Translator::translateOperationInstruction(T_Instruction instruction, bool i
             availability(instruction.result.name, op_registers[0], true);
         }
         else if(instruction.result.is_acc)
-        {
+        {   
             string store_id = instruction.id.back() == 'b' ? "storeb" : "store";
-
+            
             // Check if result register is a float
             if(instruction.result.name.front() == 'f' || instruction.result.name.front() == 'F')
             {
@@ -973,7 +978,7 @@ void Translator::translateOperationInstruction(T_Instruction instruction, bool i
 
             if(!is_number(instruction.result.acc))
             {
-                string acc_reg = findElementInDescriptors(m_registers, instruction.operands[0].acc);
+                string acc_reg = findElementInDescriptors(m_registers, instruction.result.acc);
                 if(acc_reg.empty())
                 {
                     loadTemporal(instruction.result.acc, "$v0", false);
@@ -1025,7 +1030,7 @@ void Translator::translateOperationInstruction(T_Instruction instruction, bool i
     removeElementFromDescriptors(m_variables, op_registers[0], instruction.result.name);
     removeElementFromDescriptors(*regs_to_find, instruction.result.name, op_registers[0]);
 
-    // cout << "== " << instruction.id << " " << instruction.result.name << endl;
+    // cout << "***** " << instruction.id << " " << instruction.result.name << " " << instruction.operands[0].name << " *****" << endl;
     // printVariablesDescriptors();
 }
 
@@ -1204,7 +1209,7 @@ void Translator::translateIOIntruction(T_Instruction instruction)
 
 void Translator::printVariablesDescriptors()
 {
-    for(auto var_data : m_variables)
+    for(auto var_data : m_registers)
     {
         cout << var_data.first << " => [";
         for(auto element : var_data.second)

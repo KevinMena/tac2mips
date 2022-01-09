@@ -14,6 +14,8 @@
   extern int yycolumn;
   extern char *filename;
   extern queue<string> errors;
+  bool only_optimizations = false;
+  vector<string> meta_instructions;
 
   T_Function *global = new T_Function, *current_function;
   vector<T_Function*> functions = {global};
@@ -86,7 +88,7 @@
                 // Mejoramientos de codigo
                 fg->constantPropagation();
                 fg->deleteDeadVariables();
-                fg->lazyCodeMotion();
+                //fg->lazyCodeMotion();
                 //fg->invariantDetection();
 
                 fg->computeAllUseT();
@@ -97,9 +99,17 @@
                 //cout << "// ================================================ // \n\n\n";
                 //fg->flowPrint<string>(fg->use_T);
 
-                CB->insertFlowGraph(fg);
-                CB->translate();
-                CB->print();
+                if (only_optimizations) {
+                  for (string instr : meta_instructions) {
+                      cout << instr << "\n";
+                  }
+                  fg->print();
+                }
+                else {
+                  CB->insertFlowGraph(fg);
+                  CB->translate();
+                  CB->print();
+                }
               }
             }
           ;
@@ -111,11 +121,13 @@
   D       : 
             MI_STATICV ID INT NL 
             {
+              meta_instructions.push_back("@staticv " + *$2 + " " + to_string($3));
               CB->insertInstruction(new T_Instruction{*$1, {*$2, "", false}, {{to_string($3), "", false}}});
               staticVars.insert(*$2);
             }
           | MI_STRING  ID STRING NL
             {
+              meta_instructions.push_back("@string " + *$2 + " " + *$3);
               CB->insertInstruction(new T_Instruction{*$1, {*$2, "", false}, {{*$3, "", false}}});
               staticVars.insert(*$2);
             }
@@ -347,7 +359,11 @@
               current_function->id = functions.size();
               functions.push_back(current_function);
 
-              current_function->size = $3;
+              int size = $3;
+              if (size % 4 != 0) {
+                size += 4 - size % 4; 
+              }
+              current_function->size = size;
               current_function->name = *$2;
               current_function->labels2instr[*$2] = current_function->instructions.size();
               current_function->leaders.insert(current_function->instructions.size());
@@ -416,13 +432,24 @@ int main(int argc, char **argv) {
   extern FILE *yyin;
 
   // Verify all arguments has been passed
-  if (argc != 2) {
+  if (argc != 2 && argc != 3) {
     cout << "\033[1mSYNOPSIS\n"
-      "\t\033[1mtac2mips\033[0m \033[4mFILE\033[0m\n";
+      "\t\033[1mtac2mips\033[0m [-o|--optimizations] \033[4mFILE\033[0m\n";
     return 1;
   } 
+  if (argc == 3 && argv[1] != string("-o") && argv[1] != string("--optimizations")) {
+    cout << "\033[1mSYNOPSIS\n"
+      "\t\033[1mtac2mips\033[0m [-o|--optimizations] \033[4mFILE\033[0m\n";
+    return 1;
+  }
+  else if (argc == 3) {
+    only_optimizations = true;
+    filename = argv[2];
+  }
+  else {
+    filename = argv[1];
+  }
   
-  filename = argv[1];
   // check if file was succesfully opened.
   if ((yyin = fopen(filename, "r")) == 0) {
     cout << "There was an error opening the file" << endl;

@@ -98,6 +98,7 @@ string newTemp(uint64_t &current, set<string> temps, string prefix) {
     }
     current++;
 
+    cout << "# " << temp << "\n";
     return temp;
 }
 
