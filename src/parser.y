@@ -91,7 +91,6 @@
                 //fg->invariantDetection();
 
                 fg->computeAllUseT();
-                fg->processingLitFloats();
 
                 // Mostramos el grafo resultante
                 //fg->prettyPrint();
@@ -105,6 +104,7 @@
                   fg->print();
                 }
                 else {
+                  fg->processingLitFloats();
                   CB->insertFlowGraph(fg);
                   CB->translate();
                   CB->print();

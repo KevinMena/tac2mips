@@ -155,6 +155,9 @@ void Translator::print()
     {
         cout << inst << endl;
     }
+    for (pair<string, string> float_lit : this->m_graph->float_literals) {
+        cout << ".float " + float_lit.first << " " << float_lit.second << "\n";
+    }
 
     cout << "\n.text" << endl;
     for(string inst : m_text)

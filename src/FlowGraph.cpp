@@ -571,7 +571,7 @@ void FlowGraph::processingLitFloats(void) {
             instr = n.second->block[i];
 
             if (instr.operands.size() > 0 && instr.operands[0].name.find(".") != string::npos) {
-                while (this->globals.count("f" + to_string(float_count)) > 0) {
+                while (this->temps_size.count("f" + to_string(float_count)) > 0) {
                     float_count++;
                 }
 
@@ -585,7 +585,7 @@ void FlowGraph::processingLitFloats(void) {
             }
 
             if (instr.operands.size() > 1 && instr.operands[1].name.find(".") != string::npos) {
-                while (this->globals.count("f" + to_string(float_count)) > 0) {
+                while (this->temps_size.count("f" + to_string(float_count)) > 0) {
                     float_count++;
                 }
 
