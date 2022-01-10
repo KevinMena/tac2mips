@@ -38,7 +38,7 @@ Translator::Translator()
         i++;
     }
 
-    insertVariable("BASE");
+    //insertVariable("BASE");
     insertVariable("STACK");
 
     // Oh no...
@@ -323,7 +323,7 @@ string Translator::recycleRegister(T_Instruction instruction, unordered_map<stri
         if(spill.second < min_spill)
             best_reg = spill.first;
     }
-
+    
     for(auto element : spills_emit[best_reg])
     {
         // If static variable ignore
@@ -380,6 +380,9 @@ vector<string> Translator::getReg(T_Instruction instruction, bool is_copy)
     // Choose register for every operand
     for (T_Variable current_operand : instruction.operands)
     {
+        if(instruction.id == "param")
+            break;
+        
         if(current_operand.name.empty())
             continue;
         
@@ -759,6 +762,14 @@ void Translator::translateInstruction(T_Instruction instruction)
         // If the operand is a float change the references
         if(instruction.result.name.front() == 'f' || instruction.result.name.front() == 'F')
             curr_desc = &m_float_registers;
+
+        // Take the value of the stack
+        string stack_reg = findElementInDescriptors(m_registers, "STACK");
+
+        if(stack_reg.empty())
+            m_text.emplace_back(mips_instructions.at("load") + space + "$sp" + sep + "STACK");
+        else
+            m_text.emplace_back(mips_instructions.at("assign") + space + "$sp" + sep + stack_reg);        
 
         // Save where the parameter is going to be
         int jump_size = stoi(instruction.operands[0].name) + 12;
