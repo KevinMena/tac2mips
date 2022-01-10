@@ -38,7 +38,7 @@ Translator::Translator()
         i++;
     }
 
-    insertVariable("BASE");
+    //insertVariable("BASE");
     insertVariable("STACK");
 
     // Oh no...
@@ -326,7 +326,7 @@ string Translator::recycleRegister(T_Instruction instruction, unordered_map<stri
         if(spill.second < min_spill)
             best_reg = spill.first;
     }
-
+    
     for(auto element : spills_emit[best_reg])
     {
         // If static variable ignore
@@ -383,6 +383,9 @@ vector<string> Translator::getReg(T_Instruction instruction, bool is_copy)
     // Choose register for every operand
     for (T_Variable current_operand : instruction.operands)
     {
+        if(instruction.id == "param")
+            break;
+        
         if(current_operand.name.empty())
             continue;
         
@@ -460,8 +463,9 @@ void Translator::translate()
             continue;
         
         insertVariable(temporal);
-        string temp_type = m_graph->temps_size[temporal] == 1 ? "byte" : "word";
-        m_data.emplace_back(temporal + decl + mips_instructions.at(temp_type) + space + "1");
+        string temp_type = m_graph->temps_size[temporal] == 1 ? "1" : "4";
+        m_data.emplace_back(".align 2");
+        m_data.emplace_back(temporal + decl + mips_instructions.at("space") + space + temp_type);
     }
 
     vector<FlowNode*> nodes = m_graph->getOrderedBlocks();
@@ -762,6 +766,14 @@ void Translator::translateInstruction(T_Instruction instruction)
         if(instruction.result.name.front() == 'f' || instruction.result.name.front() == 'F')
             curr_desc = &m_float_registers;
 
+        // Take the value of the stack
+        string stack_reg = findElementInDescriptors(m_registers, "STACK");
+
+        if(stack_reg.empty())
+            m_text.emplace_back(mips_instructions.at("load") + space + "$sp" + sep + "STACK");
+        else
+            m_text.emplace_back(mips_instructions.at("assign") + space + "$sp" + sep + stack_reg);        
+
         // Save where the parameter is going to be
         int jump_size = stoi(instruction.operands[0].name) + 12;
         m_text.emplace_back(mips_instructions.at("loada") + space + reg[0] + sep + to_string(jump_size) +"($sp)");
@@ -1055,7 +1067,8 @@ void Translator::translateMetaIntruction(T_Instruction instruction)
     {
         insertVariable(instruction.result.name);
         data_statics.emplace(instruction.result.name);
-        m_data.emplace_back(instruction.result.name + decl + mips_instructions.at("word") + space + instruction.operands[0].name);
+        m_data.emplace_back(".align 2");
+        m_data.emplace_back(instruction.result.name + decl + mips_instructions.at("space") + space + instruction.operands[0].name);
         return;
     }
 }

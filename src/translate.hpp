@@ -65,6 +65,7 @@ const unordered_map<string, string> mips_instructions ({
     {"word", ".word"},
     {"byte", ".byte"},
     {"float", ".float"},
+    {"space", ".space"},
 
     // Syscalls
     {"exit", "li  $v0, 17 \nsyscall"},
